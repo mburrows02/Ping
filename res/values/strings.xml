@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">What Up</string>
+    <string name="what_up">What\'s Up?</string>
+    <string name="send">Select a message to send...</string>
+    <string name="settings">Settings</string>
+    <string name="clear">Clear Messages</string>
+    <string name="reload">Reload Contacts</string>
+    <string name="help">Help</string>
+    <string name="addmsgs">Add Some Messages</string>
+    <string name="select">Select a Message to Send</string>
+	<string name="del">Delete Messages:</string>
+	<string name="select_to_del">Select a message to delete:</string>
+	<string name="new_preset">Create a new message:</string>
+	<string name="filter">Show only contacts who have this app</string>
+	<string name="sms">Send an SMS message to contacts who don\'t have this app</string>
+</resources>

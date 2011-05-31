@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TabHost xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tabhost"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:saveEnabled="true">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:padding="5dp">
+        <TabWidget
+            android:id="@android:id/tabs"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:saveEnabled="true" />
+        <FrameLayout
+            android:id="@android:id/tabcontent"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:padding="5dp">
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+				android:orientation="vertical"
+				android:layout_height="match_parent" 
+				android:layout_width="match_parent"
+				android:id="@+id/messagelist">
+				<TextView
+					android:layout_width="fill_parent"
+					android:layout_height="wrap_content"
+					android:textSize="10pt"
+					android:paddingTop="1pt"
+					android:text="@string/what_up"/>
+				<ScrollView
+			    	android:layout_width="match_parent" 
+			    	android:layout_height="fill_parent"
+			    	android:layout_weight="1"
+					android:id="@+id/messages">
+					<LinearLayout
+						android:layout_width="match_parent"
+						android:layout_height="fill_parent"
+						android:orientation="vertical"
+						android:id="@+id/messageList"/>
+				</ScrollView>
+			</LinearLayout>
+			
+			<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+				android:orientation="vertical"
+				android:layout_height="match_parent" 
+				android:layout_width="match_parent"
+				android:id="@+id/contactlist">
+				<ScrollView
+			    	android:layout_width="match_parent" 
+			    	android:layout_height="fill_parent"
+			    	android:layout_weight="1"
+					android:id="@+id/contacts">
+					<LinearLayout
+						android:layout_width="match_parent"
+						android:layout_height="fill_parent"
+						android:orientation="vertical"
+						android:id="@+id/contactList"/>
+				</ScrollView>
+				<Button 
+			    	android:layout_height="wrap_content" 
+			    	android:layout_width="fill_parent" 
+			    	android:gravity="center"
+			    	android:text="@string/send" 
+			    	android:onClick="selectMessage"
+			    	android:id="@+id/sendMsg"/>
+			</LinearLayout>
+			
+		</FrameLayout>	
+    </LinearLayout>
+</TabHost>

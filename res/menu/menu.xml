@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/settings"
+          android:icon="@drawable/ic_menu_settings"
+          android:title="@string/settings" />
+    <item android:id="@+id/clear_messages"
+          android:icon="@drawable/ic_menu_delete"
+          android:title="@string/clear" />
+    <item android:id="@+id/reload_contacts"
+          android:icon="@drawable/ic_menu_refresh"
+          android:title="@string/reload" />
+    <item android:id="@+id/help"
+          android:icon="@drawable/ic_menu_help"
+          android:title="@string/help" />
+    <item android:id="@+id/addmsgs"
+    	  android:icon="@drawable/ic_menu_add"
+    	  android:title="@string/addmsgs" />
+</menu>

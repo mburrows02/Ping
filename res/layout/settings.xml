@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical">
+	<TextView
+		android:id="@+id/label1"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="@string/del" />
+	<Spinner
+		android:id="@+id/settings_spinner"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:prompt="@string/select_to_del"
+		android:layout_below="@id/label1"
+		android:layout_alignLeft="@id/label1"/>
+	<Button
+		android:id="@+id/del_button"
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:textSize="8pt"
+		android:textStyle="bold"
+		android:text="   -   "
+		android:onClick="deletePreset"
+		android:layout_below="@id/settings_spinner"
+		android:layout_alignRight="@id/settings_spinner" />
+	<TextView
+		android:id="@+id/label2"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="@string/new_preset"
+		android:layout_below="@id/del_button"
+		android:layout_alignLeft="@id/label1"/>
+	<EditText
+		android:id="@+id/new_field"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:background="@android:drawable/editbox_background"
+		android:layout_below="@id/label2"
+		android:layout_alignLeft="@id/label2"/>
+	<Button
+		android:id="@+id/add_button"
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:textSize="8pt"
+		android:textStyle="bold"
+		android:text="   +   " 
+		android:onClick="addPreset"
+		android:layout_below="@id/new_field"
+		android:layout_alignRight="@id/new_field"/>
+	<RadioGroup
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		android:layout_below="@id/add_button"
+		android:layout_alignLeft="@id/label1">
+		<RadioButton android:id="@+id/radio_filter"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/filter" />
+		<RadioButton android:id="@+id/radio_sms"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/sms" />
+	</RadioGroup>
+</RelativeLayout>
+		
