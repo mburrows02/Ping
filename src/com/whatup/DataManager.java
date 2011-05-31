@@ -54,11 +54,13 @@ public class DataManager {
 	public void loadContacts(ContentResolver cr) {
 		contacts = new ArrayList<Contact>();
 		
+		Contact contact = new Contact();
 		System.out.println("Names:");
-		Cursor cur = cr.query(Contacts.CONTENT_URI, new String[]{Contacts._ID, Contacts.LOOKUP_KEY, Contacts.DISPLAY_NAME}, null, null, null);
+		Cursor cur = cr.query(Contacts.CONTENT_URI, new String[]{Contacts.LOOKUP_KEY, Contacts.DISPLAY_NAME}, null, null, null);
 		if(cur.moveToFirst()) {
 			do {
-				System.out.println(cur.getLong(0) + ", " + cur.getString(1) + ", " + cur.getString(2));
+				contact.setKey(cur.getString(0));
+				contact.setName(cur.getString(1));
 			} while(cur.moveToNext());
 		}
 		System.out.println("Email:");

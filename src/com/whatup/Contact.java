@@ -32,6 +32,13 @@ public class Contact {
 		gmail = g;
 	}
 	
+	public Contact(String n, String p, String g) {
+		key = "";
+		name = n;
+		phone = p;
+		gmail = g;
+	}
+	
 	public Contact(String s) {
 		String[] data = s.split(",");
 		name = data[0];
