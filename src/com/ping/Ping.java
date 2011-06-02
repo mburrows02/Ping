@@ -33,9 +33,8 @@ public class Ping extends Activity implements OnClickListener {
         setContentView(R.layout.main);
         data = new DataManager();
         Resources res = getResources();
-        System.out.println(findViewById(R.id.tabhost));
-        host = (TabHost)findViewById(R.id.tabhost);
-        System.out.println(host);
+        host = new TabHost(this);
+        host = (TabHost) findViewById(R.id.tabhost);
         host.setup();
         TabHost.TabSpec spec;
         
