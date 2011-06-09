@@ -1,15 +1,12 @@
 package com.ping;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.telephony.SmsManager;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -26,11 +23,15 @@ public class Ping extends Activity implements OnClickListener {
 	private DataManager			data;
 	private LinearLayout 		mList, cList;
 	private TabHost 			host;
+	private DataHelper			helper;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        helper = new DataHelper(this);
+        helper.open();
+        System.out.println("*****");
         data = new DataManager();
         Resources res = getResources();
         host = new TabHost(this);
@@ -46,32 +47,34 @@ public class Ping extends Activity implements OnClickListener {
         spec.setContent(R.id.messagelist);
         spec.setIndicator("Messages", res.getDrawable(R.drawable.ic_tab_in));
         host.addTab(spec);
+    	data.loadContacts(getContentResolver(), helper);
         
 		mList = (LinearLayout) findViewById(R.id.messageList);
 		cList = (LinearLayout) findViewById(R.id.contactList);
-	    Integer i = (Integer) getLastNonConfigurationInstance();
-	    if(i != null) host.setCurrentTab(i);
+	    Integer tab = (Integer) getLastNonConfigurationInstance();
+	    if(tab != null) host.setCurrentTab(tab);
 	    else host.setCurrentTab(0);
 	    
-        String sender = getIntent().getStringExtra("name");
-	    if (sender != null) {
-	        this.getIntent().removeExtra("name");
-	    	host.setCurrentTab(1);
-	    	Toast.makeText(getApplicationContext(), sender + " wants to know what's up!", Toast.LENGTH_SHORT).show();
-	        data.addInbox(sender);
-	    }
+        int code = getIntent().getIntExtra("code", 0);
+        if(code != 0 && code == R.string.receiver) {
+        	String[] senders = getIntent().getStringArrayExtra("senders");
+        	String[] bodies = getIntent().getStringArrayExtra("bodies");
+        	long[] times = getIntent().getLongArrayExtra("times");
+        	for(int i = 0; i < senders.length; i ++) {
+        		helper.createInbox(bodies[i], senders[i], times[i]);
+        		System.out.println("*****Received message: " + bodies[i] + " at " + times[i]);
+        	}
+        }
     }
         
     @Override
     public void onResume() {
     	super.onResume();
     	try {
-    		BufferedReader in = new BufferedReader(new InputStreamReader(openFileInput("appdata.txt")));
-    		data.readData(in);
-    		in.close();
+    		data.readData(helper);
     	} catch (Exception e) {
-    		System.out.println("*****Error reading file");
-			e.printStackTrace();
+    		System.out.println("*****Error reading data");
+    		e.printStackTrace();
     	}
     	loadMessages();
     	loadContacts();
@@ -81,11 +84,9 @@ public class Ping extends Activity implements OnClickListener {
     public void onPause() {
     	super.onPause();
     	try {
-    		  OutputStreamWriter out = new OutputStreamWriter(openFileOutput("appdata.txt",0));
-    		  data.writeData(out);
-    		  out.close();
+    		  data.writeData(helper);
     		} catch(Exception e) {
-    			System.out.println("*****Error writing file");
+    			System.out.println("*****Error writing data");
     			e.printStackTrace();
     		}
     }
@@ -121,19 +122,14 @@ public class Ping extends Activity implements OnClickListener {
         case R.id.help:
         	Toast.makeText(getApplicationContext(), "No!", Toast.LENGTH_SHORT).show();
             return true;
-        case R.id.addmsgs:
-        	data.addInbox("Coffee? - Annie");
-        	data.addInbox("Hey guys what's up? - David");
-        	loadMessages();
-        	return true;
         default:
             return super.onOptionsItemSelected(item);
         }
     }
     
-    public void loadContacts() { //TODO fix contact loader
+    public void loadContacts() {
+    	data.loadContacts(getContentResolver(), helper);
     	cList.removeAllViews();
-    	data.loadContacts(getContentResolver());
     	for(int i = 0; i < data.getContacts().size(); i ++) {
 			cList.addView(new CheckBox(this));
 			((CheckBox)cList.getChildAt(i)).setText(data.getContacts(i).toString());
@@ -147,7 +143,7 @@ public class Ping extends Activity implements OnClickListener {
     		mList.addView(new TextView(this));
     		mList.getChildAt(i).setOnClickListener(this);
     		((TextView)mList.getChildAt(i)).setTextSize(TypedValue.COMPLEX_UNIT_PT, 8);
-    		((TextView)mList.getChildAt(i)).setText(data.getInbox(i));
+    		((TextView)mList.getChildAt(i)).setText(data.getInbox(i).toString());
     		((TextView)mList.getChildAt(i)).setId(1000 + i);
     	}
     }
@@ -159,7 +155,8 @@ public class Ping extends Activity implements OnClickListener {
     	builder.setTitle("Select a message:");
     	builder.setCancelable(true);
     	builder.setItems(list, new DialogInterface.OnClickListener() {
-    		public void onClick(DialogInterface dialog, int item) {
+    		public void onClick(DialogInterface dialog, int item)
+    		 {
     			sendMessage(data.getMessages(item));
     		}
     	});
@@ -168,19 +165,14 @@ public class Ping extends Activity implements OnClickListener {
     }
     
     public void sendMessage(String message) {
-    	if (message != null) {
-	    	for(int i = 0; i < cList.getChildCount(); i ++) {
-	    		if(((CheckBox)cList.getChildAt(i)).isChecked()) {
-	    			if(data.getContacts(i).getGmail() == null) {  
-	    				SmsManager sms = SmsManager.getDefault();
-	    				sms.sendTextMessage(data.getContacts(i).getPhone(), null, message, null, null); 
-	    			}
-	    			Toast.makeText(getApplicationContext(), "Sending \"" + message + "\" to " + 
-	    					((CheckBox)cList.getChildAt(i)).getText(), Toast.LENGTH_SHORT).show();
-	    			((CheckBox)cList.getChildAt(i)).setChecked(false);
-	    		}
-	    	}
+    	ArrayList<Contact> recipients = new ArrayList<Contact>();
+    	for(int i = 0; i < cList.getChildCount(); i ++) {
+    		if (((CheckBox)cList.getChildAt(i)).isChecked()) {
+    			recipients.add(data.getContacts(i));
+    			((CheckBox)cList.getChildAt(i)).setChecked(false);
+    		}
     	}
+    	Sender.sendSMS(getApplicationContext(), recipients, message);
     }
     
     @Override
@@ -201,11 +193,9 @@ public class Ping extends Activity implements OnClickListener {
     	data.setFilter(b.getBoolean("filtersContacts"));
     	data.setMessages(b.getStringArrayList("messages"));
     	try {
-  		  OutputStreamWriter out = new OutputStreamWriter(openFileOutput("appdata.txt",0));
-  		  data.writeData(out);
-  		  out.close();
+  		  data.writeData(helper);
   		} catch(Exception e) {
-  			System.out.println("*****Error writing file");
+  			System.out.println("*****Error writing data");
   			e.printStackTrace();
   		}
     }

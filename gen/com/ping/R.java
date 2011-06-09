@@ -65,6 +65,7 @@ public final class R {
         public static final int filter=0x7f05000c;
         public static final int help=0x7f050006;
         public static final int new_preset=0x7f05000b;
+        public static final int receiver=0x7f05000e;
         public static final int reload=0x7f050005;
         public static final int select=0x7f050008;
         public static final int select_to_del=0x7f05000a;
@@ -72,6 +73,5 @@ public final class R {
         public static final int settings=0x7f050003;
         public static final int sms=0x7f05000d;
         public static final int what_up=0x7f050001;
-        public static final int x=0x7f05000e;
     }
 }

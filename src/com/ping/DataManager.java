@@ -1,8 +1,5 @@
 package com.ping;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -13,15 +10,16 @@ import android.provider.ContactsContract.Contacts;
 
 public class DataManager {
 	private boolean filtersContacts;
-	private ArrayList<String> inbox, messages;
+	private ArrayList<String> messages;
+	private ArrayList<Message> inbox;
 	private ArrayList<Contact> contacts;
 	
 	public void setFilter(boolean b) { filtersContacts = b; }
 	public void setMessages(ArrayList<String> newMessages) { messages = newMessages; }
 	
 	public boolean hasFilter() { return filtersContacts; }
-	public ArrayList<String> getInbox() { return inbox; }
-	public String getInbox(int i) { return inbox.get(i); }
+	public ArrayList<Message> getInbox() { return inbox; }
+	public Message getInbox(int i) { return inbox.get(i); }
 	public ArrayList<String> getMessages() { return messages; }
 	public String getMessages(int i) { return messages.get(i); }
 	public ArrayList<Contact> getContacts() { return contacts; }
@@ -35,94 +33,79 @@ public class DataManager {
 	
 	public DataManager() {
 		filtersContacts = true;
-		inbox = new ArrayList<String>();
+		inbox = new ArrayList<Message>();
 		messages = new ArrayList<String>();
 		contacts = new ArrayList<Contact>();
 	}
 	
-	public void addInbox(String s) { inbox.add(s); }
+	public void addInbox(Message s) { inbox.add(s); }
 	
 	public void removeInbox(int i) { inbox.remove(i); }
 	
-	public void clearInbox() { inbox = new ArrayList<String>(); }
+	public void clearInbox() { inbox = new ArrayList<Message>(); }
 	
-	public void addContact(String n, String p, String g) { contacts.add(new Contact(n, p, g)); }
-	
-	public void loadContacts(ContentResolver cr) {
-		contacts = new ArrayList<Contact>();
-		ArrayList<String> gmails = new ArrayList<String>();
-		ArrayList<String> phones = new ArrayList<String>();
-		
-		Cursor cur = cr.query(Email.CONTENT_URI, new String[]{Email.LOOKUP_KEY, Email.DATA}, null, null, Email.LOOKUP_KEY + " ASC");
+	public void loadContacts(ContentResolver cr, DataHelper helper) {
+		helper.clearContactList();
+		Cursor cur = cr.query(Contacts.CONTENT_URI, new String[]{Contacts.LOOKUP_KEY, Contacts.DISPLAY_NAME}, 
+				null, null, Contacts.LOOKUP_KEY + " ASC");
 		if(cur.moveToFirst()) {
 			do {
-				if(cur.getString(1).contains("@gmail.com")) {
-					gmails.add(cur.getString(0));
-					gmails.add(cur.getString(1));
-				}
+				helper.createContact(cur.getString(0), cur.getString(1), "Unknown", "Unknown", true);
 			} while(cur.moveToNext());
 		}
-		cur = cr.query(Phone.CONTENT_URI, new String[]{Phone.LOOKUP_KEY, Phone.NUMBER, Phone.TYPE}, null, null, Phone.LOOKUP_KEY + " ASC");
+		cur = cr.query(Phone.CONTENT_URI, new String[]{Phone.LOOKUP_KEY, Phone.NUMBER, Phone.TYPE}, 
+				Phone.TYPE + "=" + Phone.TYPE_MOBILE, null, Phone.LOOKUP_KEY + " ASC");
 		if(cur.moveToFirst()) {
 			do {
-				if(cur.getInt(2) == Phone.TYPE_MOBILE) {
-					phones.add(cur.getString(0));
-					phones.add(cur.getString(1));
-				}
+				helper.updateContactPhone(cur.getString(0), cur.getString(1));
 			} while(cur.moveToNext());
 		}
-		cur = cr.query(Contacts.CONTENT_URI, new String[]{Contacts.LOOKUP_KEY, Contacts.DISPLAY_NAME}, null, null, Contacts.DISPLAY_NAME + " ASC");
-		String g, p;
+		cur = cr.query(Email.CONTENT_URI, new String[]{Email.LOOKUP_KEY, Email.DATA}, null, null, Email.LOOKUP_KEY + " ASC");
 		if(cur.moveToFirst()) {
 			do {
-				g = null;
-				p = null;
-				if(gmails.contains(cur.getString(0)))
-					g = gmails.get(gmails.indexOf(cur.getString(0)) + 1);
-				if(phones.contains(cur.getString(0)))
-					p = phones.get(phones.indexOf(cur.getString(0)) + 1);
-				if(g != null || p != null) {
-					contacts.add(new Contact(cur.getString(1), p, g));
-				}
+				if(cur.getString(1).contains("@gmail.com")) helper.updateContactGmail(cur.getString(0), cur.getString(1));
 			} while(cur.moveToNext());
 		}
 	}
 	
-	public void writeData(OutputStreamWriter out) throws IOException {
-		out.write("Contacts:\n");
-		for(Contact c : contacts)
-			c.writeContact(out);
-		out.write("Inbox:\n");
-		for(String s : inbox)
-  			out.write(s + "\n");
-  		out.write("Messages:\n");
-  		for(String m : messages)
-  			out.write(m + "\n");
-  		out.write("Filter:\n" + filtersContacts + "\n");
+	public void writeData(DataHelper helper) {
+		helper.clearInbox();
+		for(Message m : inbox) {
+			helper.createInbox(m.getBody(), m.getSender(), m.getTimeSent().getTimeInMillis());
+		}
+		helper.clearMessages();
+		for(String s : messages) {
+			helper.createMessage(s);
+		}
+		for(Contact c : contacts) {
+			helper.updateContactConfig(c.getKey(), c.isShown());
+		}
 	}
 	
-	public void readData(BufferedReader in) throws IOException {
-		inbox = new ArrayList<String>();
+	public void readData(DataHelper helper) {
+		inbox = new ArrayList<Message>();
 		messages = new ArrayList<String>();
 		contacts = new ArrayList<Contact>();
-		String line = "Error loading data";
-		line = in.readLine();
-		line = in.readLine();
-		while(!line.equals("Inbox:")) {
-			contacts.add(new Contact(line));
-			line = in.readLine();
+		Cursor cur = helper.fetchInbox();
+		if(cur.moveToFirst()) {
+			do {
+				inbox.add(new Message(cur.getString(cur.getColumnIndex(DataHelper.SENDER)), cur.getString(cur.getColumnIndex(DataHelper.MESSAGE)), 
+						cur.getLong(cur.getColumnIndex(DataHelper.TIME_SENT))));
+			} while(cur.moveToNext());
 		}
-		line = in.readLine();
-		while(!line.equals("Messages:")) {
-			inbox.add(line);
-    		line = in.readLine();
+		cur = helper.fetchMessages();
+		if(cur.moveToFirst()) {
+			do {
+				messages.add(cur.getString(cur.getColumnIndex(DataHelper.MESSAGE)));
+			} while(cur.moveToNext());
 		}
-		line = in.readLine();
-		while(!line.equals("Filter:")) {
-			messages.add(line);
-    		line = in.readLine();
+		cur = helper.fetchContacts();
+		if(cur.moveToFirst()) {
+			do {
+				contacts.add(new Contact(cur.getString(cur.getColumnIndex(DataHelper.LOOKUP_KEY)), cur.getString(cur.getColumnIndex(DataHelper.NAME)),
+						cur.getString(cur.getColumnIndex(DataHelper.PHONE)), cur.getString(cur.getColumnIndex(DataHelper.GMAIL)),
+						cur.getInt(cur.getColumnIndex(DataHelper.SHOWN)) > 0));
+			} while(cur.moveToNext());
 		}
-		line = in.readLine();
-		filtersContacts = line.equals("true");
 	}
 }

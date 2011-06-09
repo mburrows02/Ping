@@ -14,5 +14,5 @@
 	<string name="new_preset">Create a new message:</string>
 	<string name="filter">Show only contacts who have this app</string>
 	<string name="sms">Send an SMS message to contacts who don\'t have this app</string>
-	<string name="x">&lt;b&gt;   X   &lt;/b&gt;</string>
+	<string name="receiver">From Receiver</string>
 </resources>
