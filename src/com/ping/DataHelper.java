@@ -26,13 +26,15 @@ public class DataHelper extends SQLiteOpenHelper {
 	private static final String TABLE_INBOX = "inbox";
 	private static final String TABLE_MESSAGES = "messages";
 	private static final String TABLE_CONTACTS = "contacts";
+	private static final String TABLE_PREFS = "preferences";
 	
 	private static final String CREATE_INBOX = "create table " + TABLE_INBOX + " (" + _ID + " integer primary key autoincrement, " + MESSAGE + " text, " + 
 				SENDER + " text, " + TIME_SENT + " integer)";
 	private static final String CREATE_MESSAGES = "create table " + TABLE_MESSAGES + " (" + _ID + " integer primary key autoincrement, " + 
 				MESSAGE + " text)";
 	private static final String CREATE_CONTACTS = "create table " + TABLE_CONTACTS + " (" + _ID + " integer primary key autoincrement, " +
-				LOOKUP_KEY + " text, " + NAME + " text, " + PHONE + " text, " + GMAIL + " text, " + SHOWN + " integer);";
+				LOOKUP_KEY + " text, " + NAME + " text, " + PHONE + " text, " + GMAIL + " text, " + SHOWN + " integer)";
+	private static final String CREATE_PREFS = "create table " + TABLE_PREFS + " (" + _ID + " integer primary key autoincrement, " + LOOKUP_KEY + " text, " + SHOWN + " integer);";
 	
 	private SQLiteDatabase base;
 	
@@ -42,10 +44,10 @@ public class DataHelper extends SQLiteOpenHelper {
 	
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		System.out.println("*****creating");
 		db.execSQL(CREATE_INBOX);
 		db.execSQL(CREATE_MESSAGES);
 		db.execSQL(CREATE_CONTACTS);
+		db.execSQL(CREATE_PREFS);
 	}
 	
 	@Override
@@ -54,11 +56,11 @@ public class DataHelper extends SQLiteOpenHelper {
 		db.execSQL("drop table if exists " + TABLE_INBOX);
 		db.execSQL("drop table if exists " + TABLE_MESSAGES);
 		db.execSQL("drop table if exists " + TABLE_CONTACTS);
+		db.execSQL("drop table if exists " + TABLE_PREFS);
 		onCreate(db);
 	}
 	
 	public DataHelper open() throws SQLException {
-		System.out.println("*****opening");
 		base = getWritableDatabase();
 		return this;
 	}
@@ -87,6 +89,13 @@ public class DataHelper extends SQLiteOpenHelper {
 		return base.insert(TABLE_CONTACTS, null, initValues);
 	}
 	
+	public long createPref(String key, boolean shown) {
+		ContentValues initValues = new ContentValues();
+		initValues.put(LOOKUP_KEY, key);
+		initValues.put(SHOWN, shown);
+		return base.insert(TABLE_PREFS, null, initValues);
+	}
+	
 	public boolean deleteInbox(long rowId) {
 		return base.delete(TABLE_INBOX, _ID + "=" + rowId, null) > 0;
 	}
@@ -99,6 +108,9 @@ public class DataHelper extends SQLiteOpenHelper {
 		return base.delete(TABLE_CONTACTS, _ID + "=" + rowId, null) > 0;
 	}
 	
+	public boolean deletePref(long rowId) {
+		return base.delete(TABLE_PREFS, _ID + "=" + rowId, null) > 0;
+	}
 	public void clearInbox() {
 		base.delete(TABLE_INBOX, null, null);
 	}
@@ -111,6 +123,10 @@ public class DataHelper extends SQLiteOpenHelper {
 		base.delete(TABLE_CONTACTS, null, null);
 	}
 	
+	public void clearPrefs() {
+		base.delete(TABLE_PREFS, null, null);
+	}
+	
 	public Cursor fetchInbox() {
 		return base.query(TABLE_INBOX, new String[]{_ID, SENDER, MESSAGE, TIME_SENT}, null, null, null, null, null);
 	}
@@ -121,6 +137,18 @@ public class DataHelper extends SQLiteOpenHelper {
 	
 	public Cursor fetchContacts() {
 		return base.query(TABLE_CONTACTS, new String[]{_ID, LOOKUP_KEY, NAME, PHONE, GMAIL, SHOWN}, null, null, null, null, null);
+	}
+	
+	public Cursor fetchPrefs() {
+		return base.query(TABLE_PREFS, new String[]{_ID, LOOKUP_KEY, SHOWN}, null, null, null, null, null);
+	}
+	
+	public Cursor fetchPref(String key) {
+		return base.query(TABLE_PREFS, new String[]{LOOKUP_KEY, SHOWN}, LOOKUP_KEY + "=\'" + key + "\'", null, null, null, null);
+	}
+	
+	public boolean contactExists(String key) {
+		return base.query(TABLE_PREFS, new String[]{LOOKUP_KEY}, LOOKUP_KEY + "=\'" + key + "\'", null, null, null, null).moveToFirst();
 	}
 	
 	public boolean updateInbox(long rowId, String message, String sender, String timeSent) {
@@ -153,5 +181,11 @@ public class DataHelper extends SQLiteOpenHelper {
 		ContentValues args = new ContentValues();
 		args.put(SHOWN, show);
 		return base.update(TABLE_CONTACTS, args, LOOKUP_KEY + "=\'" + key + "\'", null) > 0;
+	}
+	
+	public boolean updatePref(String key, boolean show) {
+		ContentValues args = new ContentValues();
+		args.put(SHOWN, show);
+		return base.update(TABLE_PREFS, args, LOOKUP_KEY + "=\'" + key + "\'", null) > 0;
 	}
 }

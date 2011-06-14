@@ -2,8 +2,10 @@ package com.ping;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
 
-public class Contact {
+@SuppressWarnings("serial")
+public class Contact implements Comparable<Contact>, Serializable {
 	private String 		key;
 	private String 		name;
 	private String 		phone;
@@ -66,6 +68,10 @@ public class Contact {
 	}
 	
 	public String toString() {
-		return "Name: " + name + "\nPhone: " + phone + "\nGmail: " + gmail;
+		return "Name: " + name + "\nPhone: " + phone + "\nGmail: " + gmail + "\nShown? " + shown;
+	}
+	@Override
+	public int compareTo(Contact c) {
+		return name.compareTo(c.getName());
 	}
 }

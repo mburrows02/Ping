@@ -31,7 +31,6 @@ public class Ping extends Activity implements OnClickListener {
         setContentView(R.layout.main);
         helper = new DataHelper(this);
         helper.open();
-        System.out.println("*****");
         data = new DataManager();
         Resources res = getResources();
         host = new TabHost(this);
@@ -106,17 +105,28 @@ public class Ping extends Activity implements OnClickListener {
     @Override
 	public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
-        case R.id.settings:
-        	Intent intent = new Intent(this, Settings.class);
-        	Bundle b = data.getBundle();
-        	intent.putExtras(b);
-        	startActivityForResult(intent, 0);
+        case R.id.messageconfig:
+        	Intent mIntent = new Intent(this, MessageConfig.class);
+        	mIntent.putStringArrayListExtra("messages", data.getMessages());
+        	startActivityForResult(mIntent, 0);
             return true;
+        case R.id.contactsconfig:
+        	Intent cIntent = new Intent(this, ContactsConfig.class);
+        	cIntent.putExtra("contacts", data.getContacts());
+        	startActivityForResult(cIntent, 1);
+        	return true;
         case R.id.clear_messages:
         	mList.removeAllViews();
         	data.clearInbox();
             return true;
         case R.id.reload_contacts:
+        	data.loadContacts(getContentResolver(), helper);
+        	try {
+        		data.readData(helper);
+        	} catch (Exception e) {
+        		System.out.println("*****Error reading data");
+        		e.printStackTrace();
+        	}
             loadContacts();
             return true;
         case R.id.help:
@@ -128,12 +138,13 @@ public class Ping extends Activity implements OnClickListener {
     }
     
     public void loadContacts() {
-    	data.loadContacts(getContentResolver(), helper);
     	cList.removeAllViews();
     	for(int i = 0; i < data.getContacts().size(); i ++) {
-			cList.addView(new CheckBox(this));
-			((CheckBox)cList.getChildAt(i)).setText(data.getContacts(i).toString());
-			((CheckBox)cList.getChildAt(i)).setId(100 + i);
+    		if(data.getContacts(i).isShown()) {
+				cList.addView(new CheckBox(this));
+				((CheckBox)cList.getChildAt(cList.getChildCount() - 1)).setText(data.getContacts(i).toString());
+				((CheckBox)cList.getChildAt(cList.getChildCount() - 1)).setId(100 + i);
+    		}
     	}    	
     }
     
@@ -143,7 +154,7 @@ public class Ping extends Activity implements OnClickListener {
     		mList.addView(new TextView(this));
     		mList.getChildAt(i).setOnClickListener(this);
     		((TextView)mList.getChildAt(i)).setTextSize(TypedValue.COMPLEX_UNIT_PT, 8);
-    		((TextView)mList.getChildAt(i)).setText(data.getInbox(i).toString());
+    		((TextView)mList.getChildAt(i)).setText(data.findSender(data.getInbox(i).getSender()) + data.getInbox(i).toString());
     		((TextView)mList.getChildAt(i)).setId(1000 + i);
     	}
     }
@@ -168,7 +179,7 @@ public class Ping extends Activity implements OnClickListener {
     	ArrayList<Contact> recipients = new ArrayList<Contact>();
     	for(int i = 0; i < cList.getChildCount(); i ++) {
     		if (((CheckBox)cList.getChildAt(i)).isChecked()) {
-    			recipients.add(data.getContacts(i));
+    			recipients.add(data.getVisibleContact(i));
     			((CheckBox)cList.getChildAt(i)).setChecked(false);
     		}
     	}
@@ -187,11 +198,11 @@ public class Ping extends Activity implements OnClickListener {
     	}
     }
     
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void onActivityResult(int reqCode, int resCode, Intent intent) {
-    	Bundle b = intent.getExtras();
-    	data.setFilter(b.getBoolean("filtersContacts"));
-    	data.setMessages(b.getStringArrayList("messages"));
+    	if(reqCode == 0) data.setMessages(intent.getStringArrayListExtra("messages"));
+    	else if(reqCode == 1) data.setContacts((ArrayList<Contact>)intent.getSerializableExtra("contacts"));
     	try {
   		  data.writeData(helper);
   		} catch(Exception e) {
